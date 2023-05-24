@@ -9,6 +9,7 @@ namespace Prodaja_kruha_backend.Interfaces
     {
         ICustomerRepository CustomerRepository {get;}
         IProductRepository ProductRepository {get;}
+        IOrderRepository OrderRepository {get;}
         Task<bool> Complete();
     }
 }

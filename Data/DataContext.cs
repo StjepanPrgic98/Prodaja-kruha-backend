@@ -15,6 +15,9 @@ namespace Prodaja_kruha_backend.Data
 
         public DbSet<Customer> Customers { get; set; }
         public DbSet<Product> Products { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<Order_item> Order_Items { get; set; }
+        public DbSet<ProductInfo> ProductsInformation { get; set; }
         
     }
 }

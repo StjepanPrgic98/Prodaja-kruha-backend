@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Prodaja_kruha_backend.Data;
 
@@ -10,9 +11,11 @@ using Prodaja_kruha_backend.Data;
 namespace Prodaja_kruha_backend.Data.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20230522152154_UpdatedOrderItems")]
+    partial class UpdatedOrderItems
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.5");
@@ -56,18 +59,20 @@ namespace Prodaja_kruha_backend.Data.Migrations
                     b.Property<bool>("Completed")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("TEXT");
-
                     b.Property<int?>("OrdersId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("TargetDay")
-                        .HasColumnType("TEXT");
+                    b.Property<int?>("ProductsId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
                     b.HasIndex("OrdersId");
+
+                    b.HasIndex("ProductsId");
 
                     b.ToTable("Order_Items");
                 });
@@ -81,36 +86,12 @@ namespace Prodaja_kruha_backend.Data.Migrations
                     b.Property<float>("Price")
                         .HasColumnType("REAL");
 
-                    b.Property<int?>("ProductInfoId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Type")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductInfoId");
-
                     b.ToTable("Products");
-                });
-
-            modelBuilder.Entity("Prodaja_kruha_backend.Entities.ProductInfo", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("Order_itemId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Order_itemId");
-
-                    b.ToTable("ProductsInformation");
                 });
 
             modelBuilder.Entity("Prodaja_kruha_backend.Entities.Order", b =>
@@ -128,30 +109,12 @@ namespace Prodaja_kruha_backend.Data.Migrations
                         .WithMany()
                         .HasForeignKey("OrdersId");
 
+                    b.HasOne("Prodaja_kruha_backend.Entities.Product", "Products")
+                        .WithMany()
+                        .HasForeignKey("ProductsId");
+
                     b.Navigation("Orders");
-                });
 
-            modelBuilder.Entity("Prodaja_kruha_backend.Entities.Product", b =>
-                {
-                    b.HasOne("Prodaja_kruha_backend.Entities.ProductInfo", null)
-                        .WithMany("Products")
-                        .HasForeignKey("ProductInfoId");
-                });
-
-            modelBuilder.Entity("Prodaja_kruha_backend.Entities.ProductInfo", b =>
-                {
-                    b.HasOne("Prodaja_kruha_backend.Entities.Order_item", null)
-                        .WithMany("ProductsInfo")
-                        .HasForeignKey("Order_itemId");
-                });
-
-            modelBuilder.Entity("Prodaja_kruha_backend.Entities.Order_item", b =>
-                {
-                    b.Navigation("ProductsInfo");
-                });
-
-            modelBuilder.Entity("Prodaja_kruha_backend.Entities.ProductInfo", b =>
-                {
                     b.Navigation("Products");
                 });
 #pragma warning restore 612, 618

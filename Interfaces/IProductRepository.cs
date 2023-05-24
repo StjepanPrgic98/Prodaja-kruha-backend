@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Prodaja_kruha_backend.DTOs;
 using Prodaja_kruha_backend.Entities;
 
 namespace Prodaja_kruha_backend.Interfaces
@@ -12,5 +13,8 @@ namespace Prodaja_kruha_backend.Interfaces
         Task<ActionResult<IEnumerable<Product>>> GetAllProducts();
         Task<ActionResult<Product>> GetProductByType(string productType);
         Task<ActionResult<IEnumerable<Product>>> GetProductByPrice(float productPrice);
+        Task<Product> AddProduct(ProductDTO productDTO);
+        Task<Product> DeleteProduct(string type);
+        Task<Product> UpdateProduct(ProductDTO productDTO);
     }
 }
