@@ -35,8 +35,17 @@ namespace Prodaja_kruha_backend.Controllers
             if(orders == null){return BadRequest("This user does not have orders!");}
             return Ok(orders);
         }
+        
+        [HttpGet("options/{options}")]
+        public async Task<ActionResult<IEnumerable<OrderDTO>>> GetAllOrdersWithOptions(string options)
+        {
+            var orders = await _unitOfWork.OrderRepository.GetAllOrdersWithOptions(options);
+            if(orders == null){return BadRequest("Something went wrong!");}
+            return Ok(orders);
+        }
+
         [HttpGet("{customerName}/{options}")]
-        public async Task<ActionResult<IEnumerable<OrderDTO>>> GetAllOrdersFromUser(string customerName, string options)
+        public async Task<ActionResult<IEnumerable<OrderDTO>>> GetAllOrdersFromUserWithOptions(string customerName, string options)
         {
             var orders = await _unitOfWork.OrderRepository.GetOrdersFromUserWithOptions(customerName, options);
             if(orders == null){return BadRequest("Something went wrong!");}
@@ -48,7 +57,6 @@ namespace Prodaja_kruha_backend.Controllers
         {
             var order = await _unitOfWork.OrderRepository.CreateOrder(orderDTO);
             if(order == null){return BadRequest("Something went wrong");}
-            await _unitOfWork.Complete();
             return order;
         }
 
@@ -57,12 +65,11 @@ namespace Prodaja_kruha_backend.Controllers
         {
             var order = await _unitOfWork.OrderRepository.UpdateOrder(orderDTO, id);
             if(order == null){return BadRequest("Something went wrong!");}
-            await _unitOfWork.Complete();
             return Ok(order);
         }
 
         [HttpDelete("delete/{id}")]
-        public async Task<ActionResult<Order_item>> DeleteOrder(int id)
+        public async Task<ActionResult<OrderDTO>> DeleteOrder(int id)
         {
             var order = await _unitOfWork.OrderRepository.DeleteOrder(id);
             if(order == null){return BadRequest("Something went wrong!");}
@@ -70,8 +77,8 @@ namespace Prodaja_kruha_backend.Controllers
             return Ok(order);
         }
 
-        [HttpPut("complete/{id}")]
-        public async Task<ActionResult<Order_item>> CompleteOrder(int id)
+        [HttpPatch("complete/{id}")]
+        public async Task<ActionResult<OrderDTO>> CompleteOrder(int id)
         {
             var order = await _unitOfWork.OrderRepository.CompleteOrder(id);
             if(order == null){return BadRequest("Order does not exist!");}

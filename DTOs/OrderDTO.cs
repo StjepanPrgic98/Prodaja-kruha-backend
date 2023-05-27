@@ -10,7 +10,7 @@ namespace Prodaja_kruha_backend.DTOs
     {
         public int OrderId { get; set; }
         public string CustomerName { get; set; }
-        public ProductInfoDTO[] OrderItems { get; set; }
+        public List<ProductInfoDTO> OrderItems { get; set; }
         public string TargetDay { get; set; }
         public bool Completed { get; set; }
     }

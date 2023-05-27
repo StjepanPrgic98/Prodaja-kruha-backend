@@ -20,48 +20,57 @@ namespace Prodaja_kruha_backend.Data.Repositories
             
         }
 
-        public async Task<Order_item> CompleteOrder(int id)
+        public async Task<OrderDTO> CompleteOrder(int id)
         {
             var order = await _context.Order_Items
             .Include(oi => oi.Orders)
             .ThenInclude(o => o.Customers)
             .Include(oi => oi.ProductsInfo)
-            .Where(oi => oi.Orders.Id == id).SingleOrDefaultAsync();
+            .ThenInclude(oi => oi.Product)
+            .Where(oi => oi.Orders.Id == id).FirstOrDefaultAsync();
             if(order == null){return null;}
             order.Completed = true;
-            return order;
+
+            var orderDTO = new OrderDTO
+            {
+                OrderId = order.Id,
+                CustomerName = order.Orders.Customers.Name,
+                OrderItems = order.ProductsInfo.Select(x => new ProductInfoDTO
+                {
+                    ProductType = x.Product.Type,
+                    Quantity = x.Quantity
+                }).ToList(),
+                TargetDay = order.TargetDay,
+                Completed = order.Completed
+            };
+            return orderDTO;
+            
         }
 
         public async Task<OrderDTO> CreateOrder(OrderDTO orderDTO)
         {
             List<ProductInfoDTO> orderItems = new List<ProductInfoDTO>(orderDTO.OrderItems);
-            List<Product> products = new List<Product>();
-            List<int> productsQuantity = new List<int>();
             List<ProductInfo> productsInfo = new List<ProductInfo>();
 
             for (int i = 0; i < orderItems.Count; i++)
             {
-                products[i] = await _context.Products.FirstOrDefaultAsync(x => x.Type == orderItems[i].ProductType);
-                productsInfo[i].Products = products;
-                productsInfo[i].Quantity = orderItems[i].Quantity;
-            }
+                Product product = await _context.Products.FirstOrDefaultAsync(x => x.Type == orderItems[i].ProductType);
+                ProductInfo productInfo = new ProductInfo
+                {
+                    Product = product,
+                    Quantity = orderItems[i].Quantity
+                };
 
+                productsInfo.Add(productInfo);
+               
+            }
+            
             var order = new Order
             {
                 Customers = new Customer {Name = orderDTO.CustomerName}
             };
 
-            for (int i = 0; i < orderItems.Count; i++)
-            {
-                productsInfo[i] = new ProductInfo
-                {
-                    Products = products,
-                    Quantity = productsQuantity[i]
-                };
-            }
-            
-            
-
+        
             var orderItem = new Order_item
             {
                 ProductsInfo = productsInfo,
@@ -71,19 +80,37 @@ namespace Prodaja_kruha_backend.Data.Repositories
 
             _context.Orders.Add(order);
             _context.Order_Items.Add(orderItem);
+                      
+            await _context.SaveChangesAsync();
+            
+            orderDTO.OrderId = orderItem.Id;
             return orderDTO;
         }
 
-        public async Task<Order_item> DeleteOrder(int id)
+        public async Task<OrderDTO> DeleteOrder(int id)
         {
             var order = await _context.Order_Items
             .Include(oi => oi.Orders)
             .ThenInclude(o => o.Customers)
             .Include(oi => oi.ProductsInfo)
-            .Where(oi => oi.Orders.Id == id).SingleOrDefaultAsync();
+            .ThenInclude(oi => oi.Product)
+            .Where(oi => oi.Orders.Id == id).FirstOrDefaultAsync();
 
             _context.Order_Items.RemoveRange(order);
-            return order;
+            
+            OrderDTO orderDTO = new OrderDTO
+            {
+                OrderId = order.Id,
+                CustomerName = order.Orders.Customers.Name,
+                OrderItems = order.ProductsInfo.Select(x => new ProductInfoDTO
+                {
+                    ProductType = x.Product.Type,
+                    Quantity = x.Quantity
+                }).ToList(),
+                TargetDay = order.TargetDay,
+                Completed = order.Completed
+            };
+            return orderDTO;
         }
 
         public async Task<IEnumerable<OrderDTO>> GetAllOrders()
@@ -92,16 +119,17 @@ namespace Prodaja_kruha_backend.Data.Repositories
             .Include(oi => oi.Orders)
             .ThenInclude(o => o.Customers)
             .Include(oi => oi.ProductsInfo)
+            .ThenInclude(oi => oi.Product)
             .Select(oi => new OrderDTO
             {
                 OrderId = oi.Orders.Id,
                 CustomerName = oi.Orders.Customers.Name,
 
-                OrderItems = oi.ProductsInfo.Select(pi => new ProductInfoDTO
+                OrderItems = oi.ProductsInfo.Select(x => new ProductInfoDTO
                 {
-                    ProductType = string.Join(", ", pi.Products.Select(x => x.Type)),
-                    Quantity = pi.Quantity
-                }).ToArray(),
+                    ProductType = x.Product.Type,
+                    Quantity = x.Quantity
+                }).ToList(),
                 
                 TargetDay = oi.TargetDay,
                 Completed = oi.Completed
@@ -126,11 +154,11 @@ namespace Prodaja_kruha_backend.Data.Repositories
                 OrderId = oi.Orders.Id,
                 CustomerName = oi.Orders.Customers.Name,
 
-                OrderItems = oi.ProductsInfo.Select(pi => new ProductInfoDTO
+                OrderItems = oi.ProductsInfo.Select(x => new ProductInfoDTO
                 {
-                    ProductType = pi.Products.Select(x => x.Type).ToString(),
-                    Quantity = pi.Quantity
-                }).ToArray(),
+                    ProductType = x.Product.Type,
+                    Quantity = x.Quantity
+                }).ToList(),
 
                 TargetDay = oi.TargetDay,
                 Completed = oi.Completed
@@ -143,10 +171,37 @@ namespace Prodaja_kruha_backend.Data.Repositories
             return orders;         
         }
 
-        public async Task<Order> GetOrderById(int id)
+        public async Task<IEnumerable<OrderDTO>> GetAllOrdersWithOptions(string options)
         {
-            var order = await _context.Orders.FindAsync(id);
-            return order;
+            bool orderCompleted = false;
+            if(options == "completed"){orderCompleted = true;}
+            if(options != "completed" && options != "notCompleted"){return null;}
+            var orders = await _context.Order_Items
+            .Include(oi => oi.Orders)
+            .ThenInclude(o => o.Customers)
+            .Include(oi => oi.ProductsInfo)
+            .ThenInclude(oi => oi.Product)
+            .Where(oi => oi.Completed == orderCompleted)
+            .Select(oi => new OrderDTO
+            {
+                OrderId = oi.Orders.Id,
+                CustomerName = oi.Orders.Customers.Name,
+
+                OrderItems = oi.ProductsInfo.Select(x => new ProductInfoDTO
+                {
+                    ProductType = x.Product.Type,
+                    Quantity = x.Quantity
+                }).ToList(),
+
+                TargetDay = oi.TargetDay,
+                Completed = oi.Completed
+            })
+            
+            .ToListAsync();
+
+            if(orders.Count < 1){return null;}
+
+            return orders;       
         }
 
         public async Task<IEnumerable<OrderDTO>> GetOrdersFromUserWithOptions(string customerName, string options)
@@ -158,17 +213,18 @@ namespace Prodaja_kruha_backend.Data.Repositories
             .Include(oi => oi.Orders)
             .ThenInclude(o => o.Customers)
             .Include(oi => oi.ProductsInfo)
+            .ThenInclude(oi => oi.Product)
             .Where(oi => oi.Orders.Customers.Name == customerName && oi.Completed == orderCompleted)
             .Select(oi => new OrderDTO
             {
                 OrderId = oi.Orders.Id,
                 CustomerName = oi.Orders.Customers.Name,
 
-                OrderItems = oi.ProductsInfo.Select(pi => new ProductInfoDTO
+                OrderItems = oi.ProductsInfo.Select(x => new ProductInfoDTO
                 {
-                    ProductType = pi.Products.Select(x => x.Type).ToString(),
-                    Quantity = pi.Quantity
-                }).ToArray(),
+                    ProductType = x.Product.Type,
+                    Quantity = x.Quantity
+                }).ToList(),
 
                 TargetDay = oi.TargetDay,
                 Completed = oi.Completed
@@ -184,28 +240,36 @@ namespace Prodaja_kruha_backend.Data.Repositories
         public async Task<OrderDTO> UpdateOrder(OrderDTO orderDTO, int id)
         {    
             List<ProductInfoDTO> orderItems = new List<ProductInfoDTO>(orderDTO.OrderItems);
-            List<Product> products = new List<Product>();
-            List<int> productsQuantity = new List<int>();
-            List<ProductInfo> productsInfo = new List<ProductInfo>();
+            List<ProductInfo> productsInfos = new List<ProductInfo>();
 
             var order = await _context.Order_Items
             .Include(oi => oi.Orders)
             .ThenInclude(o => o.Customers)
-            .Include(oi => oi.ProductsInfo).ThenInclude(pi => pi.Products)
+            .Include(oi => oi.ProductsInfo).ThenInclude(pi => pi.Product)
             .Where(oi => oi.Orders.Customers.Id == id)         
             .SingleOrDefaultAsync();
 
             for (int i = 0; i < orderItems.Count; i++)
             {
-                products[i] = await _context.Products.FirstOrDefaultAsync(x => x.Type == orderItems[i].ProductType);
-                productsInfo[i] = await _context.ProductsInformation.FirstOrDefaultAsync(x => x.Products == products);
+                Product product = await _context.Products.FirstOrDefaultAsync(x => x.Type == orderItems[i].ProductType);
+
+                ProductInfo productInfo = new ProductInfo
+                {
+                    Product = product,
+                    Quantity = orderItems[i].Quantity
+                };
+                productsInfos.Add(productInfo);
+                
+                    
+            
             }
             
-        
-
             order.Orders.Customers.Name = orderDTO.CustomerName;
-            order.ProductsInfo = productsInfo;
+            order.ProductsInfo = productsInfos;
             order.TargetDay = orderDTO.TargetDay;
+
+            await _context.SaveChangesAsync();
+            orderDTO.OrderId = order.Id;
 
             return orderDTO;
         }

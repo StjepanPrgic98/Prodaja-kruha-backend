@@ -8,7 +8,7 @@ namespace Prodaja_kruha_backend.Entities
     public class ProductInfo
     {
         public int Id { get; set; }
-        public ICollection<Product> Products { get; set; }
+        public Product Product { get; set; }
         public int Quantity { get; set; }
     }
 }
