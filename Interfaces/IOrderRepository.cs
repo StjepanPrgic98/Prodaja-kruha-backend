@@ -15,6 +15,7 @@ namespace Prodaja_kruha_backend.Interfaces
         Task<IEnumerable<OrderDTO>> GetAllOrdersWithOptions(string options);
         Task<IEnumerable<OrderDTO>> GetOrdersFromUserWithOptions(string customerName, string options);
         Task<IEnumerable<OrderDTO>> GetAllOrders();
+         Task<IEnumerable<OrderDTO>> GetAllOrdersForTargetDay(string day);
         Task<IEnumerable<TotalAmmoutDTO>> GetTotalAmmountOfProductsOrdered();
         Task<OrderDTO> CreateOrder(OrderDTO orderDTO);
         Task<OrderDTO> UpdateOrder(OrderDTO orderDTO, int id);

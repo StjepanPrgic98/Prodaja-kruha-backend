@@ -99,17 +99,8 @@ namespace Prodaja_kruha_backend.Data.Repositories
 
             _context.Order_Items.RemoveRange(order);
             
-            OrderDTO orderDTO = new OrderDTO
+            var orderDTO = new OrderDTO
             {
-                OrderId = order.Id,
-                CustomerName = order.Orders.Customers.Name,
-                OrderItems = order.ProductsInfo.Select(x => new ProductInfoDTO
-                {
-                    ProductType = x.Product.Type,
-                    Quantity = x.Quantity
-                }).ToList(),
-                TargetDay = order.TargetDay,
-                Completed = order.Completed
             };
             return orderDTO;
         }
@@ -121,6 +112,36 @@ namespace Prodaja_kruha_backend.Data.Repositories
             .ThenInclude(o => o.Customers)
             .Include(oi => oi.ProductsInfo)
             .ThenInclude(oi => oi.Product).OrderBy(oi => oi.Completed).ThenBy(oi => oi.TargetDay)
+            .Select(oi => new OrderDTO
+            {
+                OrderId = oi.Orders.Id,
+                CustomerName = oi.Orders.Customers.Name,
+
+                OrderItems = oi.ProductsInfo.Select(x => new ProductInfoDTO
+                {
+                    ProductType = x.Product.Type,
+                    Quantity = x.Quantity
+                }).ToList(),
+                
+                TargetDay = oi.TargetDay,
+                TotalPrice = oi.ProductsInfo.Sum(x => x.Product.Price * x.Quantity),
+                Completed = oi.Completed
+            })
+            .ToListAsync();
+
+            if(orders.Count < 1){return null;}
+
+            return orders; 
+        }
+        public async Task<IEnumerable<OrderDTO>> GetAllOrdersForTargetDay(string day)
+        {
+            var orders = await _context.Order_Items
+            .Include(oi => oi.Orders)
+            .ThenInclude(o => o.Customers)
+            .Include(oi => oi.ProductsInfo)
+            .ThenInclude(oi => oi.Product)
+            .Where(oi => oi.TargetDay == day)
+            .OrderBy(oi => oi.Completed).ThenBy(oi => oi.Orders.Customers.Name)
             .Select(oi => new OrderDTO
             {
                 OrderId = oi.Orders.Id,

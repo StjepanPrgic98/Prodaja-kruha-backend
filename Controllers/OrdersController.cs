@@ -27,6 +27,14 @@ namespace Prodaja_kruha_backend.Controllers
             if(orders == null){return BadRequest("Something went wrong");}
             return Ok(orders);
         }
+        
+        [HttpGet("targetDay/{day}")]
+        public async Task<ActionResult<IEnumerable<OrderDTO>>> GetAllOrdersForTargetDay(string day)
+        {
+            var orders = await _unitOfWork.OrderRepository.GetAllOrdersForTargetDay(day);
+            if(orders == null){return BadRequest("Something went wrong!");}
+            return Ok(orders);
+        }
 
         [HttpGet("{customerName}")]
         public async Task<ActionResult<IEnumerable<OrderDTO>>> GetAllOrdersFromUser(string customerName)
