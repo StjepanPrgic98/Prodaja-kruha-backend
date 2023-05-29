@@ -64,6 +64,7 @@ namespace Prodaja_kruha_backend.Data.Repositories
                 productsInfo.Add(productInfo);
                
             }
+            productsInfo.OrderBy(x => x.Product.Price);
             
             var order = new Order
             {
@@ -119,7 +120,7 @@ namespace Prodaja_kruha_backend.Data.Repositories
             .Include(oi => oi.Orders)
             .ThenInclude(o => o.Customers)
             .Include(oi => oi.ProductsInfo)
-            .ThenInclude(oi => oi.Product)
+            .ThenInclude(oi => oi.Product).OrderBy(oi => oi.Completed).ThenBy(oi => oi.TargetDay)
             .Select(oi => new OrderDTO
             {
                 OrderId = oi.Orders.Id,
@@ -132,6 +133,7 @@ namespace Prodaja_kruha_backend.Data.Repositories
                 }).ToList(),
                 
                 TargetDay = oi.TargetDay,
+                TotalPrice = oi.ProductsInfo.Sum(x => x.Product.Price * x.Quantity),
                 Completed = oi.Completed
             })
             .ToListAsync();
@@ -202,6 +204,35 @@ namespace Prodaja_kruha_backend.Data.Repositories
             if(orders.Count < 1){return null;}
 
             return orders;       
+        }
+
+        public async Task<IEnumerable<TotalAmmoutDTO>> GetTotalAmmountOfProductsOrdered()
+        {
+            List<TotalAmmoutDTO> totalAmmoutDTOs = new List<TotalAmmoutDTO>();
+            var products = await _context.Products.ToListAsync();
+
+            var orders = await _context.Order_Items
+            .Include(oi => oi.Orders)
+            .ThenInclude(o => o.Customers)
+            .Include(oi => oi.ProductsInfo)
+            .ThenInclude(oi => oi.Product).ToListAsync();
+
+            for (int i = 0; i < products.Count; i++)
+            {
+                int TotalQuantity = orders.Sum(oi => oi.ProductsInfo.Where(pi => pi?.Product?.Type == products[i].Type).Sum(pi => pi.Quantity));
+                float TotalPrice = orders.Sum(oi => oi.ProductsInfo.Where(pi => pi?.Product?.Type == products[i].Type).Sum(pi => pi.Quantity * pi.Product.Price));
+
+                var totalDto = new TotalAmmoutDTO
+                {
+                    ProductType = products[i].Type,
+                    TotalQuantity = TotalQuantity,
+                    TotalPrice = TotalPrice
+                };
+                totalAmmoutDTOs.Add(totalDto);
+            }
+
+            return totalAmmoutDTOs;
+
         }
 
         public async Task<IEnumerable<OrderDTO>> GetOrdersFromUserWithOptions(string customerName, string options)

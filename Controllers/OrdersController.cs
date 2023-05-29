@@ -52,6 +52,13 @@ namespace Prodaja_kruha_backend.Controllers
             return Ok(orders);
         }
 
+        [HttpGet("totalAmmount")]
+        public async Task<ActionResult<IEnumerable<TotalAmmoutDTO>>> GetTotalAmmountOfProductsOrdered()
+        {
+            var totalAmmount = await _unitOfWork.OrderRepository.GetTotalAmmountOfProductsOrdered();
+            return Ok(totalAmmount);
+        }
+
         [HttpPost("create")]
         public async Task<ActionResult<OrderDTO>> CreateOrder(OrderDTO orderDTO)
         {
