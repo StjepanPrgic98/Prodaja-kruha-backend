@@ -27,6 +27,22 @@ namespace Prodaja_kruha_backend.Controllers
             if(orders == null){return BadRequest("Something went wrong");}
             return Ok(orders);
         }
+
+        [HttpGet("id/{id}")]
+        public async Task<ActionResult<OrderDTO>> GetOrderById(int id)
+        {
+            var order = await _unitOfWork.OrderRepository.GetOrderById(id);
+            if(order == null){return BadRequest("Order doesnt exist!");}
+            return order;
+        }
+
+        [HttpGet("date/{date}")]
+        public async Task<ActionResult<IEnumerable<OrderDTO>>> GetOrdersForTargetDate(string date)
+        {
+            var orders = await _unitOfWork.OrderRepository.GetOrdersForTargetDate(date);
+            if(orders == null){return BadRequest("No orders for this date!");}
+            return Ok(orders);
+        }
         
         [HttpGet("targetDay/{day}")]
         public async Task<ActionResult<IEnumerable<OrderDTO>>> GetAllOrdersForTargetDay(string day)

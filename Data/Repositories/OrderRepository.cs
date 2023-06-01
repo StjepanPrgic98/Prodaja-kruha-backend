@@ -76,6 +76,7 @@ namespace Prodaja_kruha_backend.Data.Repositories
             {
                 ProductsInfo = productsInfo,
                 TargetDay = orderDTO.TargetDay,
+                TargetDate = orderDTO.TargetDate,
                 Orders = order
             };
 
@@ -124,6 +125,7 @@ namespace Prodaja_kruha_backend.Data.Repositories
                 }).ToList(),
                 
                 TargetDay = oi.TargetDay,
+                TargetDate = oi.TargetDate,
                 TotalPrice = oi.ProductsInfo.Sum(x => x.Product.Price * x.Quantity),
                 Completed = oi.Completed
             })
@@ -324,6 +326,70 @@ namespace Prodaja_kruha_backend.Data.Repositories
             orderDTO.OrderId = order.Id;
 
             return orderDTO;
+        }
+
+        public async Task<OrderDTO> GetOrderById(int id)
+        {
+            var order = await _context.Order_Items
+            .Include(oi => oi.Orders)
+            .ThenInclude(o => o.Customers)
+            .Include(oi => oi.ProductsInfo)
+            .ThenInclude(oi => oi.Product)
+            .Where(oi => oi.Id == id)
+            .Select(oi => new OrderDTO
+            {
+                OrderId = oi.Orders.Id,
+                CustomerName = oi.Orders.Customers.Name,
+
+                OrderItems = oi.ProductsInfo.Select(x => new ProductInfoDTO
+                {
+                    ProductType = x.Product.Type,
+                    Quantity = x.Quantity
+                }).ToList(),
+
+                TargetDay = oi.TargetDay,
+                Completed = oi.Completed,
+                TotalPrice = oi.ProductsInfo.Sum(x => x.Product.Price * x.Quantity)
+            })
+            
+            .FirstOrDefaultAsync();
+
+            if(order == null){return null;}
+
+            return order;
+        }
+
+        public async Task<IEnumerable<OrderDTO>> GetOrdersForTargetDate(string date)
+        {
+            var orders = await _context.Order_Items
+            .Include(oi => oi.Orders)
+            .ThenInclude(o => o.Customers)
+            .Include(oi => oi.ProductsInfo)
+            .ThenInclude(oi => oi.Product)
+            .Where(oi => oi.TargetDate == date)
+            .OrderBy(oi => oi.Completed).ThenBy(oi => oi.Orders.Customers.Name)
+            .Select(oi => new OrderDTO
+            {
+                OrderId = oi.Orders.Id,
+                CustomerName = oi.Orders.Customers.Name,
+
+                OrderItems = oi.ProductsInfo.Select(x => new ProductInfoDTO
+                {
+                    ProductType = x.Product.Type,
+                    Quantity = x.Quantity
+                }).ToList(),
+                
+                TargetDay = oi.TargetDay,
+                TotalPrice = oi.ProductsInfo.Sum(x => x.Product.Price * x.Quantity),
+                Completed = oi.Completed,
+                TargetDate = oi.TargetDate
+                
+            })
+            .ToListAsync();
+
+            if(orders.Count < 1){return null;}
+
+            return orders; 
         }
     }
 }

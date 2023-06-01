@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Prodaja_kruha_backend.Data;
 
@@ -10,9 +11,11 @@ using Prodaja_kruha_backend.Data;
 namespace Prodaja_kruha_backend.Data.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20230601121432_TargetDateTimeAdded")]
+    partial class TargetDateTimeAdded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.5");
@@ -62,7 +65,7 @@ namespace Prodaja_kruha_backend.Data.Migrations
                     b.Property<int?>("OrdersId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("TargetDate")
+                    b.Property<DateTime>("TargetDate")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("TargetDay")

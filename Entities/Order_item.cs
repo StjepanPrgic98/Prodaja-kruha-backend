@@ -13,5 +13,6 @@ namespace Prodaja_kruha_backend.Entities
         public string TargetDay { get; set; }
         public bool Completed { get; set; } = false;
         public DateTime DateCreated { get; set; } = DateTime.UtcNow;
+        public string TargetDate { get; set; }
     }
 }
