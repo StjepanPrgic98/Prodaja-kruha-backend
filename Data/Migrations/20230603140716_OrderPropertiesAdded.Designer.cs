@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Prodaja_kruha_backend.Data;
 
@@ -10,9 +11,11 @@ using Prodaja_kruha_backend.Data;
 namespace Prodaja_kruha_backend.Data.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20230603140716_OrderPropertiesAdded")]
+    partial class OrderPropertiesAdded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.5");
@@ -50,72 +53,6 @@ namespace Prodaja_kruha_backend.Data.Migrations
                     b.ToTable("CustomerProperties");
                 });
 
-            modelBuilder.Entity("Prodaja_kruha_backend.Entities.Ingredient", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("Outdated")
-                        .HasColumnType("TEXT");
-
-                    b.Property<float>("Price")
-                        .HasColumnType("REAL");
-
-                    b.Property<string>("Type")
-                        .HasColumnType("TEXT");
-
-                    b.Property<float>("Weight")
-                        .HasColumnType("REAL");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Ingredients");
-                });
-
-            modelBuilder.Entity("Prodaja_kruha_backend.Entities.IngredientInfo", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("IngredientId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("IngredientUsedId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<float>("Percentage")
-                        .HasColumnType("REAL");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IngredientId");
-
-                    b.HasIndex("IngredientUsedId");
-
-                    b.ToTable("IngredientInfos");
-                });
-
-            modelBuilder.Entity("Prodaja_kruha_backend.Entities.IngredientUsed", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("ProductId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("IngredientsUsed");
-                });
-
             modelBuilder.Entity("Prodaja_kruha_backend.Entities.Order", b =>
                 {
                     b.Property<int>("Id")
@@ -138,10 +75,15 @@ namespace Prodaja_kruha_backend.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("Order_ItemId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Property")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Order_ItemId");
 
                     b.ToTable("OrderProperties");
                 });
@@ -158,13 +100,7 @@ namespace Prodaja_kruha_backend.Data.Migrations
                     b.Property<DateTime>("DateCreated")
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("NotSold")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int?>("OrdersId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("PropertyId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("TargetDate")
@@ -176,8 +112,6 @@ namespace Prodaja_kruha_backend.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("OrdersId");
-
-                    b.HasIndex("PropertyId");
 
                     b.ToTable("Order_Items");
                 });
@@ -196,9 +130,6 @@ namespace Prodaja_kruha_backend.Data.Migrations
 
                     b.Property<string>("Type")
                         .HasColumnType("TEXT");
-
-                    b.Property<float>("Weight")
-                        .HasColumnType("REAL");
 
                     b.HasKey("Id");
 
@@ -238,30 +169,6 @@ namespace Prodaja_kruha_backend.Data.Migrations
                     b.Navigation("Customer");
                 });
 
-            modelBuilder.Entity("Prodaja_kruha_backend.Entities.IngredientInfo", b =>
-                {
-                    b.HasOne("Prodaja_kruha_backend.Entities.Ingredient", "Ingredient")
-                        .WithMany()
-                        .HasForeignKey("IngredientId");
-
-                    b.HasOne("Prodaja_kruha_backend.Entities.IngredientUsed", "IngredientUsed")
-                        .WithMany("IngredientsInfo")
-                        .HasForeignKey("IngredientUsedId");
-
-                    b.Navigation("Ingredient");
-
-                    b.Navigation("IngredientUsed");
-                });
-
-            modelBuilder.Entity("Prodaja_kruha_backend.Entities.IngredientUsed", b =>
-                {
-                    b.HasOne("Prodaja_kruha_backend.Entities.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId");
-
-                    b.Navigation("Product");
-                });
-
             modelBuilder.Entity("Prodaja_kruha_backend.Entities.Order", b =>
                 {
                     b.HasOne("Prodaja_kruha_backend.Entities.Customer", "Customers")
@@ -271,19 +178,22 @@ namespace Prodaja_kruha_backend.Data.Migrations
                     b.Navigation("Customers");
                 });
 
+            modelBuilder.Entity("Prodaja_kruha_backend.Entities.OrderProperty", b =>
+                {
+                    b.HasOne("Prodaja_kruha_backend.Entities.Order_item", "Order_Item")
+                        .WithMany()
+                        .HasForeignKey("Order_ItemId");
+
+                    b.Navigation("Order_Item");
+                });
+
             modelBuilder.Entity("Prodaja_kruha_backend.Entities.Order_item", b =>
                 {
                     b.HasOne("Prodaja_kruha_backend.Entities.Order", "Orders")
                         .WithMany()
                         .HasForeignKey("OrdersId");
 
-                    b.HasOne("Prodaja_kruha_backend.Entities.OrderProperty", "Property")
-                        .WithMany()
-                        .HasForeignKey("PropertyId");
-
                     b.Navigation("Orders");
-
-                    b.Navigation("Property");
                 });
 
             modelBuilder.Entity("Prodaja_kruha_backend.Entities.ProductInfo", b =>
@@ -297,11 +207,6 @@ namespace Prodaja_kruha_backend.Data.Migrations
                         .HasForeignKey("ProductId");
 
                     b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("Prodaja_kruha_backend.Entities.IngredientUsed", b =>
-                {
-                    b.Navigation("IngredientsInfo");
                 });
 
             modelBuilder.Entity("Prodaja_kruha_backend.Entities.Order_item", b =>

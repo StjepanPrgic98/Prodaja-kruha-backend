@@ -16,5 +16,6 @@ namespace Prodaja_kruha_backend.Interfaces
         Task<Product> AddProduct(ProductDTO productDTO);
         Task<Product> DeleteProduct(string type);
         Task<Product> UpdateProduct(ProductDTO productDTO);
+        
     }
 }

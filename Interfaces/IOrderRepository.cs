@@ -19,9 +19,16 @@ namespace Prodaja_kruha_backend.Interfaces
         Task<IEnumerable<OrderDTO>> GetAllOrdersForTargetDay(string day);
         Task<IEnumerable<OrderDTO>> GetOrdersForTargetDate(string date);
         Task<IEnumerable<TotalAmmoutDTO>> GetTotalAmmountOfProductsOrdered();
+        Task<IEnumerable<TotalAmmoutDTO>> GetTotalAmmountOfProductsOrderedForTargetDate(string date);
         Task<OrderDTO> CreateOrder(OrderDTO orderDTO);
+        Task<bool> IsUsernameTaken(string username);
         Task<OrderDTO> UpdateOrder(OrderDTO orderDTO, int id);
+        Task<OrderDTO> GetOrderProperty(OrderDTO orderDTO);
+        Task<OrderDTO> SetOrderProperty(int orderId, string property);
+        Task<IEnumerable<OrderDTO>> GetOrdersWithPropertyRegular();
+        Task<IEnumerable<OrderDTO>> GetListOfRegularOrdersWithOptions(string option, string date, string day);
         Task<OrderDTO> DeleteOrder(int id);
         Task<OrderDTO> CompleteOrder(int id);
+        Task<OrderDTO> MarkAsNotSold(int id);
     }
 }

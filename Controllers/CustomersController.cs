@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Prodaja_kruha_backend.Data;
 using Prodaja_kruha_backend.Data.Repositories;
+using Prodaja_kruha_backend.DTOs;
 using Prodaja_kruha_backend.Entities;
 using Prodaja_kruha_backend.Interfaces;
 
@@ -31,6 +32,14 @@ namespace Prodaja_kruha_backend.Controllers
         {
             var customer = await _unitOfWork.CustomerRepository.GetCustomerByName(customerName);
             if(customer == null){return BadRequest($"There is no user with {customerName} name in the database");}
+            return customer;
+        }
+
+        [HttpPut("{customerName}/{property}")]
+        public async Task<ActionResult<CustomerDTO>> SetCustomerProperty(string customerName, string property)
+        {
+            var customer = await _unitOfWork.CustomerRepository.SetCustomerProperty(customerName, property);
+            if(customer == null){return BadRequest("This user does not exist!");}
             return customer;
         }
     }

@@ -14,6 +14,8 @@ namespace Prodaja_kruha_backend.DTOs
         public string TargetDay { get; set; }
         public float TotalPrice { get; set; }
         public bool Completed { get; set; }
+        public bool NotSold { get; set; }
         public string TargetDate { get; set; }
+        public string  Property { get; set; }
     }
 }

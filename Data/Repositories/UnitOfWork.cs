@@ -18,6 +18,8 @@ namespace Prodaja_kruha_backend.Data.Repositories
         public IProductRepository ProductRepository =>  new ProductRepository(_context);
 
         public IOrderRepository OrderRepository =>  new OrderRepository(_context);
+        public IIngredientRepository IngredientRepository =>  new IngredientRepository(_context);
+
 
         public async Task<bool> Complete()
         {

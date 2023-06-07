@@ -83,6 +83,38 @@ namespace Prodaja_kruha_backend.Controllers
             return Ok(totalAmmount);
         }
 
+        [HttpGet("totalAmmount/{date}")]
+        public async Task<ActionResult<IEnumerable<TotalAmmoutDTO>>> GetTotalAmmountOfProductsOrderedForTargetDate(string date)
+        {
+            var totalAmmount = await _unitOfWork.OrderRepository.GetTotalAmmountOfProductsOrderedForTargetDate(date);
+            if(totalAmmount == null){return BadRequest("Something went wrong!");}
+            return Ok(totalAmmount);
+        }
+
+        [HttpGet("properties")]
+        public async Task<ActionResult<OrderDTO>> GetOrderByProperty(OrderDTO orderDTO)
+        {
+            var order = await _unitOfWork.OrderRepository.GetOrderProperty(orderDTO);
+            if(order == null){return BadRequest("This order does not exist!");}
+            return order;
+        }
+
+        [HttpGet("listOfRegularOrders")]
+        public async Task<ActionResult<IEnumerable<OrderDTO>>> GetOrdersWithPropertyRegular()
+        {
+            var orders = await _unitOfWork.OrderRepository.GetOrdersWithPropertyRegular();
+            if(orders == null){return BadRequest("Could not get orders!");}
+            return Ok(orders);
+        }
+
+        [HttpPost("listOfRegularOrders/{option}/{date}/{day}")]
+        public async Task<ActionResult<IEnumerable<OrderDTO>>> GetListOfRegularOrdersWithOptions(string option, string date, string day)
+        {
+            var orders = await _unitOfWork.OrderRepository.GetListOfRegularOrdersWithOptions(option, date, day);
+            if(orders == null){return BadRequest("Something went wrong!");}
+            return Ok(orders);
+        }
+
         [HttpPost("create")]
         public async Task<ActionResult<OrderDTO>> CreateOrder(OrderDTO orderDTO)
         {
@@ -114,6 +146,22 @@ namespace Prodaja_kruha_backend.Controllers
             var order = await _unitOfWork.OrderRepository.CompleteOrder(id);
             if(order == null){return BadRequest("Order does not exist!");}
             await _unitOfWork.Complete();
+            return order;
+        }
+
+        [HttpPatch("property/{orderId}/{property}")]
+        public async Task<ActionResult<OrderDTO>> SetOrderProperty(int orderId, string property)
+        {
+            var order = await _unitOfWork.OrderRepository.SetOrderProperty(orderId, property);
+            if(order == null){return BadRequest("This order does not exist!");}
+            return order;
+        }
+
+        [HttpPatch("notSold/{id}")]
+        public async Task<ActionResult<OrderDTO>> MarkAsNotSold(int id)
+        {
+            var order = await _unitOfWork.OrderRepository.MarkAsNotSold(id);
+            if(order == null){return BadRequest("Order does not exist!");}
             return order;
         }
 

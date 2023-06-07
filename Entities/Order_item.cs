@@ -12,7 +12,9 @@ namespace Prodaja_kruha_backend.Entities
         public Order Orders { get; set; }
         public string TargetDay { get; set; }
         public bool Completed { get; set; } = false;
+        public bool NotSold { get; set; }
         public DateTime DateCreated { get; set; } = DateTime.UtcNow;
         public string TargetDate { get; set; }
+        public OrderProperty Property { get; set; }
     }
 }
