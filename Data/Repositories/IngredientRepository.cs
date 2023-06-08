@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.ObjectPool;
 using Prodaja_kruha_backend.DTOs;
 using Prodaja_kruha_backend.Entities;
 using Prodaja_kruha_backend.Interfaces;
@@ -95,26 +96,82 @@ namespace Prodaja_kruha_backend.Data.Repositories
         public async Task<IEnumerable<IngredientsUsedDTO>> GetAllProductsAndTheirIngredients()
         {
             var ingredientsUsed = await _context.IngredientsUsed
-            .Include(i => i.IngredientsInfo).ThenInclude(i => i.Ingredient)
-            .Include(i => i.Product)
-            .Select(i => new IngredientsUsedDTO
-            {
-                Id = i.Id,
-                ProductType = i.Product.Type,
-                IngredientTypes = new List<IngredientInfoDTO>
+                .Include(i => i.IngredientsInfo).ThenInclude(i => i.Ingredient)
+                .Include(i => i.Product)
+                .Select(i => new IngredientsUsedDTO
                 {
-                    new IngredientInfoDTO
+                    Id = i.Id,
+                    ProductType = i.Product.Type,
+                    IngredientTypes = i.IngredientsInfo.Select(info => new IngredientInfoDTO
                     {
-                        IngredientType = i.IngredientsInfo.Select(x => x.Ingredient.Type).FirstOrDefault(),
-                        IngredientPercentage = i.IngredientsInfo.Select(x => x.Percentage).FirstOrDefault()
-                    }
-                    
-                },
-            }).ToListAsync();
+                        IngredientType = info.Ingredient.Type,
+                        IngredientPercentage = info.Percentage
+                    }).ToList()
+                })
+                .ToListAsync();
 
             return ingredientsUsed;
-            
         }
+
+        public async Task<IEnumerable<ProductIngredientPriceDTO>> GetAllProductsWithIngredientWeightAndPrice()
+        {
+            var ingredientsUsed = await _context.IngredientsUsed
+                .Include(i => i.IngredientsInfo).ThenInclude(i => i.Ingredient)
+                .Include(i => i.Product)
+                .ToListAsync();
+
+            var productIngredientPriceDTOs = ingredientsUsed.Select(i => new ProductIngredientPriceDTO
+            {
+                ProductType = i.Product.Type,
+                IngredientInfo = i.IngredientsInfo.Select(x => new ProductIngredientPercentageDTO
+                {
+                    IngredientType = x.Ingredient.Type,
+                    IngredientPercentageWeigth =  CalculateWeight(x.Percentage, i.Product.Weight),
+                    IngredientPercentagePrice = CalculatePriceForPercentageUsed(Calculate1kgPrice(x.Ingredient.Price, x.Ingredient.Weight), CalculateWeight(x.Percentage, i.Product.Weight))
+                }).ToList()
+            }).ToList();
+
+            foreach (var product in productIngredientPriceDTOs)
+            {
+                product.TotalProductPrice = product.IngredientInfo.Sum(i => i.IngredientPercentagePrice);
+            }
+
+            return productIngredientPriceDTOs;
+        }
+
+
+        private float Calculate1kgPrice(float price, float weight)
+        {
+            float pricePerKg = (price / weight) * 1000;
+            if (float.IsNaN(pricePerKg) || float.IsInfinity(pricePerKg))
+            {
+                return 0;
+            }
+            return pricePerKg;
+        }
+
+        private float CalculatePriceForPercentageUsed(float kgPrice, float percentageWeight)
+        {
+            float result = (kgPrice / 1000) * percentageWeight;
+            if (float.IsNaN(result) || float.IsInfinity(result))
+            {
+                return 0;
+            }
+            return (float)Math.Round(result, 2);
+        }
+
+        private float CalculateWeight(float percentage, float productWeight)
+        {
+            float weightNeeded = (productWeight * percentage) / 100;
+            if (float.IsNaN(weightNeeded) || float.IsInfinity(weightNeeded))
+            {
+                return 0;
+            }
+            return (float)Math.Round(weightNeeded, 2);
+        }
+
+
+
 
         public async Task<IngredientsUsedDTO> LinkProductToIngredient(IngredientsUsedDTO ingredientsUsedDTO)
         {
@@ -181,5 +238,73 @@ namespace Prodaja_kruha_backend.Data.Repositories
 
             return ingredientCreated;
         }
+
+        public async Task<IEnumerable<TotalAmmountIngredientsDTO>> GetTotalAmmountOfIngredientsForTargetDate(string date)
+        {
+            List<TotalAmmoutDTO> totalAmmoutDTOs = new List<TotalAmmoutDTO>();
+            List<TotalAmmountIngredientsDTO> totalAmmountIngredientsDTOs = new List<TotalAmmountIngredientsDTO>();
+
+            var products = await _context.Products.ToListAsync();
+
+            var orders = await _context.Order_Items
+                .Include(oi => oi.Orders.Customers)
+                .Include(oi => oi.ProductsInfo)
+                .ThenInclude(oi => oi.Product)
+                .Where(oi => oi.TargetDate == date)
+                .ToListAsync();
+
+            foreach (var product in products)
+            {
+                int totalQuantity = orders.Sum(oi => oi.ProductsInfo.Where(pi => pi.Product.Type == product.Type).Sum(pi => pi.Quantity));
+                float totalPrice = orders.Sum(oi => oi.ProductsInfo.Where(pi => pi.Product.Type == product.Type).Sum(pi => pi.Quantity * pi.Product.Price));
+
+                var totalDto = new TotalAmmoutDTO
+                {
+                    ProductType = product.Type,
+                    TotalQuantity = totalQuantity,
+                };
+
+                totalAmmoutDTOs.Add(totalDto);
+
+                var ingredientsUsed = await _context.IngredientsUsed
+                    .Include(i => i.IngredientsInfo).ThenInclude(i => i.Ingredient)
+                    .Include(i => i.Product)
+                    .Where(i => i.Product.Type == product.Type)
+                    .ToListAsync();
+
+                foreach (var ingredientUsed in ingredientsUsed)
+                {
+                    foreach (var ingredientInfo in ingredientUsed.IngredientsInfo)
+                    {
+                        float totalIngredientWeight = CalculateWeight(ingredientInfo.Percentage, product.Weight) * totalQuantity;
+                        float totalIngredientPrice = CalculatePriceForPercentageUsed(Calculate1kgPrice(ingredientInfo.Ingredient.Price, ingredientInfo.Ingredient.Weight), CalculateWeight(ingredientInfo.Percentage, product.Weight)) * totalQuantity;
+
+                        var ingredientDto = new TotalAmmountIngredientsDTO
+                        {
+                            IngredientType = ingredientInfo.Ingredient.Type,
+                            TotalIngredientWeight = totalIngredientWeight,
+                            TotalIngredientPrice = (float)Math.Round(totalIngredientPrice, 2) // Explicitly convert to float
+                        };
+
+                        totalAmmountIngredientsDTOs.Add(ingredientDto);
+                    }
+                }
+            }
+
+            var groupedIngredients = totalAmmountIngredientsDTOs
+                .GroupBy(dto => dto.IngredientType)
+                .Select(group => new TotalAmmountIngredientsDTO
+                {
+                    IngredientType = group.Key,
+                    TotalIngredientWeight = group.Sum(dto => dto.TotalIngredientWeight),
+                    TotalIngredientPrice = (float)Math.Round(group.Sum(dto => dto.TotalIngredientPrice), 2) // Explicitly convert to float
+                })
+                .OrderByDescending(dto => dto.TotalIngredientPrice); // Sort by ingredient package price
+
+            return groupedIngredients;
+        }
+
+
+
     }
 }

@@ -11,6 +11,8 @@ namespace Prodaja_kruha_backend.Interfaces
     {
         Task<IEnumerable<NewIngredientDTO>> GetAllIngredients();
         Task<IEnumerable<IngredientsUsedDTO>> GetAllProductsAndTheirIngredients();
+        Task<IEnumerable<ProductIngredientPriceDTO>> GetAllProductsWithIngredientWeightAndPrice();
+        Task<IEnumerable<TotalAmmountIngredientsDTO>> GetTotalAmmountOfIngredientsForTargetDate(string date);
         Task<NewIngredientDTO> CreateIngredient(NewIngredientDTO newIngredientDTO);
         Task<NewIngredientDTO> DeleteIngredient(int id);
         Task<NewIngredientDTO> UpdateIngredient(NewIngredientDTO newIngredientDTO);

@@ -35,6 +35,22 @@ namespace Prodaja_kruha_backend.Controllers
             return Ok(products);
         }
 
+        [HttpGet("allProductsAndPrices")]
+        public async Task<ActionResult<IEnumerable<ProductIngredientPriceDTO>>> GetAllProductsWithIngredientWeightAndPrice()
+        {
+            var products = await _unitOfWork.IngredientRepository.GetAllProductsWithIngredientWeightAndPrice();
+            if(products == null){return BadRequest("Something went wrong!");}
+            return Ok(products);
+        }
+
+        [HttpGet("totalProductsAndIngredients/{date}")]
+        public async Task<ActionResult<IEnumerable<TotalAmmountIngredientsDTO>>> GetTotalAmmountOfIngredientsForTargetDate(string date)
+        {
+            var total = await _unitOfWork.IngredientRepository.GetTotalAmmountOfIngredientsForTargetDate(date);
+            if(total == null){return BadRequest("Something went wrong!");}
+            return Ok(total);
+        }
+
         [HttpPost("create")]
         public async Task<ActionResult<NewIngredientDTO>> CreateNewIngredient(NewIngredientDTO newIngredientDTO)
         {

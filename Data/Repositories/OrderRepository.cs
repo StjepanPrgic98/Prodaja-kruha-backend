@@ -274,7 +274,6 @@ namespace Prodaja_kruha_backend.Data.Repositories
                 {
                     ProductType = products[i].Type,
                     TotalQuantity = TotalQuantity,
-                    TotalPrice = TotalPrice
                 };
                 totalAmmoutDTOs.Add(totalDto);
             }
@@ -442,13 +441,13 @@ namespace Prodaja_kruha_backend.Data.Repositories
             for (int i = 0; i < products.Count; i++)
             {
                 int TotalQuantity = orders.Sum(oi => oi.ProductsInfo.Where(pi => pi?.Product?.Type == products[i].Type).Sum(pi => pi.Quantity));
-                float TotalPrice = orders.Sum(oi => oi.ProductsInfo.Where(pi => pi?.Product?.Type == products[i].Type).Sum(pi => pi.Quantity * pi.Product.Price));
+                float totalPrice = orders.Sum(oi => oi.ProductsInfo.Where(pi => pi?.Product?.Type == products[i].Type).Sum(pi => pi.Quantity * pi.Product.Price));
 
                 var totalDto = new TotalAmmoutDTO
                 {
                     ProductType = products[i].Type,
                     TotalQuantity = TotalQuantity,
-                    TotalPrice = TotalPrice
+                    TotalPrice = totalPrice
                 };
                 totalAmmoutDTOs.Add(totalDto);
             }
@@ -456,6 +455,7 @@ namespace Prodaja_kruha_backend.Data.Repositories
             return totalAmmoutDTOs;
 
         }
+
 
         public async Task<OrderDTO> GetOrderProperty(OrderDTO orderDTO)
         {
@@ -683,5 +683,6 @@ namespace Prodaja_kruha_backend.Data.Repositories
             return orderDTO;
             
         }
+
     }
 }
